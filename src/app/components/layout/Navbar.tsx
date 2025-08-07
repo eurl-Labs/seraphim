@@ -11,7 +11,6 @@ import {
   NavbarLogo,
 } from "../ui/resizable-navbar";
 import { useState } from "react";
-import Image from "next/image";
 
 export default function NavBarSeraphim() {
   const navItems = [
@@ -34,13 +33,10 @@ export default function NavBarSeraphim() {
   return (
     <div className="relative w-full ">
       <Navbar>
-        {/* Desktop Navigation */}
         <NavBody>
-          {/* <NavItems items={navItems} /> */}
           <NavbarLogo/>
           <div className="flex items-center gap-4">
-            {/* <NavbarButton variant="secondary">Login</NavbarButton> */}
-            <NavbarButton variant="primary">Launch App</NavbarButton>
+            <NavbarButton variant="primary" className="font-semibold bg-[#023e8a] text-white">Launch App</NavbarButton>
           </div>
         </NavBody>
 

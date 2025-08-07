@@ -1,28 +1,40 @@
-"use client";
-import React from "react";
-import { AnimatedPinDemo } from "./components/ui/AnimatedPinDemo";
-import { LampContainer, LampDemo } from "./components/ui/lamp";
-import { motion } from "motion/react";
-import { VideoText } from "@/components/magicui/video-text";
+import Hero from "./components/layout/sections/hero";
+import MultiCollateral from "./components/layout/sections/multiCollateral";
+import Platform from "./components/layout/sections/platform";
+import { BentoDemo } from "./components/layout/sections/features";
+
+export const metadata = {
+  title: "Seraphim",
+  description: "",
+  openGraph: {
+    type: "website",
+    url: "",
+    title: "Seraphim",
+    description: "",
+    images: [
+      {
+        url: "",
+        width: 1200,
+        height: 630,
+        alt: "Seraphim",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "",
+    title: "Seraphim",
+    description: "",
+    images: [""],
+  },
+};
 export default function Home() {
   return (
-    <LampContainer>
-      {/* <div className="w-full min-h-screen bg-black flex flex-col items-center justify-center px-2 md:px-10 py-4"> */}
-      <h2 className="text-white text-2xl md:text-5xl font-bold text-center">
-        The Automated
-      </h2>
-      <h2 className="text-white text-2xl md:text-5xl font-bold text-center mt-2">
-        Multi-Collateral Stablecoin
-      </h2>
-
-      <div className="relative h-[100px] md:h-[11rem] w-full overflow-hidden">
-        <VideoText src="https://ipfs.io/ipfs/bafybeicpyjz6rrfclhrivhqvwm7swrfrfba72ctjkawttkf2rcgbvmtjue">
-          Seraphim
-        </VideoText>
-      </div>
-      {/* https://cdn.magicui.design/ocean-small.webm */}
-      <AnimatedPinDemo />
-      {/* </div> */}
-    </LampContainer>
+    <>
+      <Hero />
+      <MultiCollateral />
+      <Platform />
+      <BentoDemo/>
+    </>
   );
 }

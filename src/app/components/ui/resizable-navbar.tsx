@@ -234,9 +234,9 @@ export const NavbarLogo = () => {
       <Image src={SeraphimLogo} alt="logo" width={50} height={50} />
       <a
         href="#"
-        className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
+        className="relative z-20 flex items-center text-sm font-normal text-black"
       >
-        <span className="font-medium text-white dark:text-white">Seraphim</span>
+        <span className="font-semibold text-white dark:text-white">Seraphim</span>
       </a>
     </main>
   );

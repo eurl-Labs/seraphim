@@ -6,7 +6,7 @@ import { srUSDLogo } from "../../../../public/assets/logos";
 
 export function AnimatedPinDemo() {
   return (
-    <div className="h-[25rem] w-full flex items-center justify-center pb-10">
+    <div className="h-[25rem] w-full flex items-center justify-center">
       <PinContainer title="srUSD - Seraphim Stablecoin" href="#">
         <div className="flex basis-full flex-col p-4 tracking-tight text-slate-100/50 sm:basis-1/2 w-[20rem] h-[20rem]">
           <div className="flex gap-2">
