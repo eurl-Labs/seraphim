@@ -32,7 +32,7 @@ export default function NavBarSeraphim() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full ">
       <Navbar>
         {/* Desktop Navigation */}
         <NavBody>
