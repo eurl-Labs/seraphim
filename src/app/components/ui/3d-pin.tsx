@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/app/lib/utils";
-
+import Image from "next/image";
+import { srUSDLogo } from "../../../../public/assets/logos";
 export const PinContainer = ({
   children,
   title,
@@ -47,7 +48,7 @@ export const PinContainer = ({
           style={{
             transform: transform,
           }}
-          className="absolute left-1/2 p-4 top-1/2  flex justify-start items-start  rounded-2xl  shadow-[0_8px_16px_rgb(0_0_0/0.4)] bg-black border border-white/[0.1] group-hover/pin:border-white/[0.2] transition duration-700 overflow-hidden"
+          className="absolute left-1/2 p-4 pb-[4rem] top-1/2  flex justify-start items-start  rounded-2xl  shadow-[0_8px_16px_rgb(0_0_0/0.4)] bg-black border border-white/[0.1] group-hover/pin:border-white/[0.2] transition duration-700 overflow-hidden"
         >
           <div className={cn(" relative z-50 ", className)}>{children}</div>
         </div>
@@ -70,7 +71,17 @@ export const PinPerspective = ({
         <div className="absolute top-0 inset-x-0  flex justify-center">
           <div className="relative flex space-x-2 items-center z-10 rounded-full bg-zinc-950 py-0.5 px-4 ring-1 ring-white/10 ">
             <span className="relative z-20 text-white text-xs font-bold inline-block py-0.5">
+              <div className="flex gap-2">
+              <Image
+                src={srUSDLogo}
+                alt="srUSD Logo"
+                width={15}
+                height={20}
+                className="rounded-full"
+              />
               {title}
+              </div>
+            
             </span>
             <span className="absolute -bottom-0 left-[1.125rem] h-px w-[calc(100%-2.25rem)] bg-gradient-to-r from-emerald-400/0 via-emerald-400/90 to-emerald-400/0 transition-opacity duration-500 group-hover/btn:opacity-40"></span>
           </div>
