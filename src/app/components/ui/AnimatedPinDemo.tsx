@@ -24,7 +24,7 @@ export function AnimatedPinDemo() {
 
           <div className="text-base !m-2 !p-2 font-normal">
             <span className="text-slate-500">
-              The Automated Multi-Collateral Stablecoin
+              A stablecoin backed by multiple collateral options.
             </span>
           </div>
           <div className="p-5 flex flex-1 w-full rounded-lg mt-4 bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 items-center justify-center">

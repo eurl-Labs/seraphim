@@ -16,11 +16,11 @@ export default function Home() {
       </h2>
 
       <div className="relative h-[100px] md:h-[11rem] w-full overflow-hidden">
-        <VideoText src="https://cdn.magicui.design/ocean-small.webm">
+        <VideoText src="https://ipfs.io/ipfs/bafybeicpyjz6rrfclhrivhqvwm7swrfrfba72ctjkawttkf2rcgbvmtjue">
           Seraphim
         </VideoText>
       </div>
-
+      {/* https://cdn.magicui.design/ocean-small.webm */}
       <AnimatedPinDemo />
       {/* </div> */}
     </LampContainer>
