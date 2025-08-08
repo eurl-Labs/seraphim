@@ -2,7 +2,6 @@
 import {
   Navbar,
   NavBody,
-  NavItems,
   MobileNav,
   NavbarButton,
   MobileNavHeader,
@@ -11,32 +10,22 @@ import {
   NavbarLogo,
 } from "../ui/resizable-navbar";
 import { useState } from "react";
-
+import { RainbowButton } from "@/components/magicui/rainbow-button";
+import Link from "next/link";
 export default function NavBarSeraphim() {
-  const navItems = [
-    {
-      name: "Features",
-      link: "#features",
-    },
-    {
-      name: "Pricing",
-      link: "#pricing",
-    },
-    {
-      name: "Contact",
-      link: "#contact",
-    },
-  ];
-
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div className="relative w-full ">
       <Navbar>
         <NavBody>
-          <NavbarLogo/>
+          <NavbarLogo />
           <div className="flex items-center gap-4">
-            <NavbarButton variant="primary" className="font-semibold bg-[#023e8a] text-white">Launch App</NavbarButton>
+            <Link href="/lending">
+              <RainbowButton className="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                Launch App
+              </RainbowButton>
+            </Link>
           </div>
         </NavBody>
 
@@ -54,7 +43,7 @@ export default function NavBarSeraphim() {
             isOpen={isMobileMenuOpen}
             onClose={() => setIsMobileMenuOpen(false)}
           >
-            {navItems.map((item, idx) => (
+            {/* {navItems.map((item, idx) => (
               <a
                 key={`mobile-link-${idx}`}
                 href={item.link}
@@ -63,7 +52,7 @@ export default function NavBarSeraphim() {
               >
                 <span className="block">{item.name}</span>
               </a>
-            ))}
+            ))} */}
             <div className="flex w-full flex-col gap-4">
               {/* <NavbarButton
                 onClick={() => setIsMobileMenuOpen(false)}

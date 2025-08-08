@@ -7,10 +7,10 @@ import { VideoText } from "@/components/magicui/video-text";
 export default function Hero() {
   return (
     <LampContainer>
-      <h2 className="text-white text-2xl md:text-5xl font-bold text-center">
+      <h2 className="text-white text-2xl md:text-5xl font-medium text-center">
         The Automated
       </h2>
-      <h2 className="text-white text-2xl md:text-5xl font-bold text-center mt-2">
+      <h2 className="text-white text-2xl md:text-5xl font-semibold text-center mt-2">
         Multi-Collateral Stablecoin
       </h2>
 

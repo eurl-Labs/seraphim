@@ -2,6 +2,8 @@ import Hero from "./components/layout/sections/hero";
 import MultiCollateral from "./components/layout/sections/multiCollateral";
 import Platform from "./components/layout/sections/platform";
 import { BentoDemo } from "./components/layout/sections/features";
+import Footer from "./components/layout/sections/footer";
+import NavBarSeraphim from "./components/layout/Navbar";
 
 export const metadata = {
   title: "Seraphim",
@@ -31,10 +33,12 @@ export const metadata = {
 export default function Home() {
   return (
     <>
+    <NavBarSeraphim />
       <Hero />
       <MultiCollateral />
       <Platform />
       <BentoDemo/>
+      <Footer/>
     </>
   );
 }

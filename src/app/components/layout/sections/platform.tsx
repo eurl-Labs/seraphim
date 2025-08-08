@@ -27,11 +27,11 @@ export default function Platform() {
   ];
 
   return (
-    <section className="relative max-w-[75%] mx-auto pb-24 sm:pb-32 mt-6">
+    <section className="relative mx-auto pb-24 sm:pb-32 bg-slate-950">
       <h2 className="text-lg md:text-xl text-center mb-6">Built in</h2>
 
       <div className="relative">
-        <Marquee className="[--duration:20s]">
+        <Marquee className="[--duration:20s] ">
           {platforms.map(({ src, name }) => (
             <div
               key={name}
@@ -43,8 +43,8 @@ export default function Platform() {
           ))}
         </Marquee>
 
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-slate-950" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-slate-950" />
       </div>
     </section>
   );

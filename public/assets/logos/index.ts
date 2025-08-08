@@ -6,6 +6,8 @@ import ethOriginalLogo from "./ethOriLogo.png";
 import stEthLogo from "./stEthLogo.png";
 import usdsLogo from "./usdsLogo.svg";
 import wBtcLogo from "./wbtcLogo.svg";
+import chainlinkLogo from "./chainlinkLogo.png"
+import thegraphLogo from "./thegraphLogo.png"
 
 export {
     SeraphimLogo,
@@ -15,5 +17,7 @@ export {
     cbEthLogo,
     ethOriginalLogo,
     stEthLogo,
-    usdsLogo
+    usdsLogo,
+    chainlinkLogo,
+    thegraphLogo,
 }
