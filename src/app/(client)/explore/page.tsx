@@ -148,47 +148,34 @@ export default function ExplorePage() {
         
         {/* Content */}
         <div className="relative z-10 min-h-screen">
-          <div className="container mx-auto px-6 py-24">
+          <div className="container mx-auto px-4 py-16">
             {/* Header */}
-            <div className="mb-12 text-center">
-              <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white via-blue-100 to-[#4A90E2] bg-clip-text text-transparent">
+            <div className="mb-8 text-center">
+              <h1 className="text-2xl font-bold mb-2 bg-gradient-to-r from-white via-blue-100 to-[#4A90E2] bg-clip-text text-transparent">
                 Explore DeFi
               </h1>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                Discover the best DeFi protocols, compare yields, and find opportunities 
-                across the decentralized finance ecosystem.
+              <p className="text-sm text-gray-300 max-w-xl mx-auto">
+                Discover and compare DeFi protocols across the ecosystem
               </p>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6 text-center">
-                <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wide mb-2">Total TVL</h3>
-                <p className="text-3xl font-bold text-white">{totalTVL}</p>
-                <p className="text-sm text-green-400 mt-1">+12.4% this week</p>
+            {/* Stats Overview - Simplified to 2 key metrics */}
+            <div className="grid grid-cols-2 gap-4 mb-8 max-w-lg mx-auto">
+              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-4 text-center">
+                <p className="text-xl font-bold text-white">{totalTVL}</p>
+                <p className="text-xs text-gray-400">Total Value Locked</p>
               </div>
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6 text-center">
-                <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wide mb-2">Active Protocols</h3>
-                <p className="text-3xl font-bold text-white">{protocols.length}</p>
-                <p className="text-sm text-blue-400 mt-1">Across 5 categories</p>
-              </div>
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6 text-center">
-                <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wide mb-2">Total Users</h3>
-                <p className="text-3xl font-bold text-white">116.3K</p>
-                <p className="text-sm text-green-400 mt-1">+8.7% growth</p>
-              </div>
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6 text-center">
-                <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wide mb-2">24h Volume</h3>
-                <p className="text-3xl font-bold text-white">$22.6M</p>
-                <p className="text-sm text-green-400 mt-1">+15.2%</p>
+              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-4 text-center">
+                <p className="text-xl font-bold text-white">{protocols.length}</p>
+                <p className="text-xs text-gray-400">Active Protocols</p>
               </div>
             </div>
 
             {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Filters Sidebar */}
               <div className="lg:col-span-1">
-                <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6 sticky top-24">
+                <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-4 sticky top-24">
                   <ExploreFilters
                     onCategoryChange={handleCategoryChange}
                     onSortChange={handleSortChange}
@@ -199,30 +186,15 @@ export default function ExplorePage() {
 
               {/* Protocols Grid */}
               <div className="lg:col-span-3">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-white mb-2">
-                    Protocols ({filteredProtocols.length})
-                  </h2>
-                  <p className="text-gray-300">
-                    Discover and compare DeFi protocols by TVL, yield, and activity
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredProtocols.map((protocol) => (
                     <ProtocolCard key={protocol.id} {...protocol} />
                   ))}
                 </div>
 
                 {filteredProtocols.length === 0 && (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-white font-medium mb-2">No protocols found</h3>
-                    <p className="text-gray-400">Try adjusting your search or filters</p>
+                  <div className="text-center py-8">
+                    <p className="text-gray-400">No protocols found</p>
                   </div>
                 )}
               </div>
