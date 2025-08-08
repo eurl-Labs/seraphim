@@ -22,9 +22,7 @@ export default function NavBarSeraphim() {
           <NavbarLogo />
           <div className="flex items-center gap-4">
             <Link href="/lending">
-              <RainbowButton className="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-                Launch App
-              </RainbowButton>
+              <RainbowButton>Launch App</RainbowButton>
             </Link>
           </div>
         </NavBody>

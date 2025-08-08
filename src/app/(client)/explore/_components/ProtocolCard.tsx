@@ -26,7 +26,7 @@ export default function ProtocolCard({
   change24h,
 }: ProtocolCardProps) {
   return (
-    <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:bg-black/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-white/10">
+    <div className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-xl p-6 hover:bg-black/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-white/10">
       {/* Header */}
       <div className="flex items-center gap-4 mb-4">
         <div className="relative">

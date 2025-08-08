@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ethOriginalLogo,
   wBtcLogo,
@@ -11,299 +11,379 @@ import {
   usdsLogo,
 } from "../../../../../public/assets/logos";
 
+/* ----------------------------- Types & Data ----------------------------- */
+
 interface Token {
   id: string;
   symbol: string;
   name: string;
   logo: any;
-  price: number;
-  balance: number;
+  price: number;   // mock oracle price in USD
+  balance: number; // mock wallet balance (units)
   decimals: number;
 }
 
-const tokens: Token[] = [
-  {
-    id: "eth",
-    symbol: "ETH",
-    name: "Ethereum",
-    logo: ethOriginalLogo,
-    price: 3420.50,
-    balance: 2.5,
-    decimals: 18,
-  },
-  {
-    id: "wbtc",
-    symbol: "wBTC",
-    name: "Wrapped Bitcoin",
-    logo: wBtcLogo,
-    price: 67890.00,
-    balance: 0.1,
-    decimals: 8,
-  },
-  {
-    id: "steth",
-    symbol: "stETH",
-    name: "Staked Ethereum",
-    logo: stEthLogo,
-    price: 3415.20,
-    balance: 1.8,
-    decimals: 18,
-  },
-  {
-    id: "cbbtc",
-    symbol: "cbBTC",
-    name: "Coinbase Bitcoin",
-    logo: cbBtcLogo,
-    price: 67850.00,
-    balance: 0.05,
-    decimals: 8,
-  },
-  {
-    id: "srusd",
-    symbol: "srUSD",
-    name: "Seraphim USD",
-    logo: srUSDLogo,
-    price: 1.00,
-    balance: 1000,
-    decimals: 18,
-  },
-  {
-    id: "usds",
-    symbol: "USDS",
-    name: "Sky Dollar",
-    logo: usdsLogo,
-    price: 0.998,
-    balance: 500,
-    decimals: 18,
-  },
+const TOKENS: Token[] = [
+  { id: "eth",  symbol: "ETH",  name: "Ethereum",         logo: ethOriginalLogo, price: 3420.5,  balance: 2.5,  decimals: 18 },
+  { id: "wbtc", symbol: "wBTC", name: "Wrapped Bitcoin",  logo: wBtcLogo,        price: 67890.0, balance: 0.1,  decimals: 8 },
+  { id: "steth",symbol: "stETH",name: "Staked Ethereum",  logo: stEthLogo,       price: 3415.2,  balance: 1.8,  decimals: 18 },
+  { id: "cbbtc",symbol: "cbBTC",name: "Coinbase Bitcoin", logo: cbBtcLogo,       price: 67850.0, balance: 0.05, decimals: 8 },
+  { id: "srusd",symbol: "srUSD",name: "Seraphim USD",     logo: srUSDLogo,       price: 1.0,     balance: 1000, decimals: 18 },
+  { id: "usds", symbol: "USDS", name: "Sky Dollar",       logo: usdsLogo,        price: 0.998,   balance: 500,  decimals: 18 },
 ];
 
+/* ----------------------------- Utilities ----------------------------- */
+
+const fmtUSD = (n: number) =>
+  `$${(isFinite(n) ? n : 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+
+const clampToDecimals = (v: string, decimals: number) => {
+  if (!v) return v;
+  const [int, frac = ""] = v.split(".");
+  return frac.length > decimals ? `${int}.${frac.slice(0, decimals)}` : v;
+};
+
+const reserveForGas = 0.01; // keep a tiny ETH buffer for gas
+
+/* ------------------------------ Component ----------------------------- */
+
 export default function SwapPanel() {
-  const [fromToken, setFromToken] = useState<Token>(tokens[0]);
-  const [toToken, setToToken] = useState<Token>(tokens[4]); // srUSD
+  const [fromToken, setFromToken] = useState<Token>(TOKENS[0]); // ETH
+  const [toToken, setToToken] = useState<Token>(TOKENS[4]);     // srUSD
   const [fromAmount, setFromAmount] = useState<string>("");
   const [toAmount, setToAmount] = useState<string>("");
+  const [invertRate, setInvertRate] = useState(false);
+
   const [slippage, setSlippage] = useState<number>(0.5);
+  const [customSlip, setCustomSlip] = useState<string>("");
+  const [openFromList, setOpenFromList] = useState(false);
+  const [openToList, setOpenToList] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
 
-  // Calculate exchange rate
-  const exchangeRate = fromToken && toToken ? fromToken.price / toToken.price : 0;
-  
-  // Calculate to amount based on from amount
-  const calculateToAmount = (amount: string) => {
-    if (!amount || !fromToken || !toToken) return "";
-    const fromValue = parseFloat(amount);
-    const toValue = fromValue * exchangeRate;
-    return toValue.toFixed(6);
-  };
+  const rate = useMemo(() => {
+    const r = fromToken.price / toToken.price;
+    return invertRate ? 1 / r : r;
+  }, [fromToken, toToken, invertRate]);
 
-  // Calculate from amount based on to amount
-  const calculateFromAmount = (amount: string) => {
-    if (!amount || !fromToken || !toToken) return "";
-    const toValue = parseFloat(amount);
-    const fromValue = toValue / exchangeRate;
-    return fromValue.toFixed(6);
-  };
+  const priceImpact = 0.02; // mock: real apps compute from pool depth/route
 
-  // Handle from amount change
-  const handleFromAmountChange = (value: string) => {
-    setFromAmount(value);
-    setToAmount(calculateToAmount(value));
-  };
-
-  // Handle to amount change
-  const handleToAmountChange = (value: string) => {
-    setToAmount(value);
-    setFromAmount(calculateFromAmount(value));
-  };
-
-  // Swap tokens
-  const handleSwapTokens = () => {
-    const tempToken = fromToken;
-    setFromToken(toToken);
-    setToToken(tempToken);
-    
-    // Recalculate amounts
-    if (fromAmount) {
-      const newToAmount = calculateToAmount(fromAmount);
-      setToAmount(newToAmount);
+  // compute toAmount from fromAmount
+  useEffect(() => {
+    if (!fromAmount) {
+      setToAmount("");
+      return;
     }
+    const fa = parseFloat(fromAmount) || 0;
+    const t = fa * (fromToken.price / toToken.price);
+    setToAmount(t ? t.toFixed(6) : "");
+  }, [fromAmount, fromToken, toToken]);
+
+  // validation
+  const maxSpendable =
+    fromToken.id === "eth"
+      ? Math.max(0, fromToken.balance - reserveForGas)
+      : fromToken.balance;
+
+  const exceedsBalance =
+    fromAmount !== "" && parseFloat(fromAmount) > maxSpendable;
+
+  const minReceived =
+    toAmount ? (parseFloat(toAmount) * (1 - (customSlip ? parseFloat(customSlip) : slippage) / 100)) : 0;
+
+  const canSwap =
+    !!fromAmount &&
+    !!toAmount &&
+    !exceedsBalance &&
+    parseFloat(fromAmount) > 0 &&
+    fromToken.id !== toToken.id &&
+    !isLoading;
+
+  const priceImpactTone =
+    priceImpact >= 5
+      ? "text-rose-300"
+      : priceImpact >= 1
+      ? "text-amber-300"
+      : "text-emerald-300";
+
+  const slippageValue = customSlip ? Math.max(0, parseFloat(customSlip) || 0) : slippage;
+
+  const setQuickSlip = (v: number) => {
+    setSlippage(v);
+    setCustomSlip("");
   };
 
-  // Calculate price impact
-  const priceImpact = 0.02; // Mock price impact
+  const handleSwapClick = async () => {
+    if (!canSwap) return;
+    setIsLoading(true);
+    // mock delay
+    await new Promise((r) => setTimeout(r, 1200));
+    setIsLoading(false);
+    // reset inputs (demo)
+    setFromAmount("");
+    setToAmount("");
+  };
 
-  // Calculate minimum received (with slippage)
-  const minimumReceived = parseFloat(toAmount) * (1 - slippage / 100);
+  const selectToken = (side: "from" | "to", t: Token) => {
+    if (side === "from") {
+      if (t.id === toToken.id) setToToken(fromToken);
+      setFromToken(t);
+    } else {
+      if (t.id === fromToken.id) setFromToken(toToken);
+      setToToken(t);
+    }
+    setOpenFromList(false);
+    setOpenToList(false);
+  };
 
   return (
-    <div className="max-w-lg mx-auto">
-      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6 space-y-4">
+    <div className="max-w-md mx-auto">
+      <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] p-5 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Swap Tokens</h2>
-          <button className="text-gray-400 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
+        <div className="flex items-center justify-between">
+          <h2 className="text-white font-semibold">Swap</h2>
+          <div className="text-xs text-white/50">Best route • Mock</div>
         </div>
 
-        {/* From Token */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <label className="text-sm font-medium text-gray-300">From</label>
-            <span className="text-xs text-gray-400">
-              Balance: {fromToken.balance} {fromToken.symbol}
+        {/* FROM */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-white/70">From</span>
+            <span className="text-white/50">
+              Balance:{" "}
+              <span className="tabular-nums">
+                {maxSpendable.toLocaleString(undefined, { maximumFractionDigits: 6 })}
+              </span>{" "}
+              {fromToken.symbol}
             </span>
           </div>
-          
-          <div className="bg-black/30 border border-white/20 rounded-xl p-4">
-            <div className="flex items-center justify-between">
+
+          <div className={`rounded-xl ring-1 ring-white/10 bg-white/[0.03] p-4 ${exceedsBalance ? "ring-rose-400/40" : ""}`}>
+            <div className="flex items-center gap-3">
+              {/* Amount */}
               <div className="flex-1">
                 <input
                   type="number"
+                  inputMode="decimal"
                   value={fromAmount}
-                  onChange={(e) => handleFromAmountChange(e.target.value)}
+                  onChange={(e) =>
+                    setFromAmount(clampToDecimals(e.target.value, fromToken.decimals))
+                  }
                   placeholder="0.0"
-                  className="w-full bg-transparent text-white text-2xl font-semibold placeholder-gray-400 focus:outline-none"
+                  className="w-full bg-transparent text-white text-2xl font-semibold placeholder:text-white/30 focus:outline-none"
                 />
-                <div className="text-sm text-gray-400 mt-1">
-                  ${(parseFloat(fromAmount) * fromToken.price || 0).toLocaleString()}
+                <div className="text-xs text-white/40 mt-1">
+                  {fmtUSD((parseFloat(fromAmount) || 0) * fromToken.price)}
                 </div>
               </div>
-              
-              <div className="flex items-center gap-3 bg-black/40 rounded-xl px-3 py-2 border border-white/10">
-                <Image
-                  src={fromToken.logo}
-                  alt={fromToken.symbol}
-                  width={24}
-                  height={24}
-                  className="rounded-full"
-                />
-                <div className="text-right">
-                  <div className="text-white font-medium text-sm">{fromToken.symbol}</div>
-                  <div className="text-gray-400 text-xs">{fromToken.name}</div>
+
+              {/* Token selector */}
+              <button
+                onClick={() => setOpenFromList((s) => !s)}
+                className="flex items-center gap-2 rounded-lg bg-white/5 ring-1 ring-white/10 px-3 py-2 hover:bg-white/10"
+              >
+                <Image src={fromToken.logo} alt={fromToken.symbol} width={22} height={22} className="rounded-full" />
+                <div className="text-left">
+                  <div className="text-sm text-white">{fromToken.symbol}</div>
+                  <div className="text-[10px] text-white/50">{fromToken.name}</div>
                 </div>
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
-              </div>
+              </button>
             </div>
-            
-            <div className="flex justify-end mt-2">
+
+            <div className="mt-2 flex justify-between">
               <button
-                onClick={() => handleFromAmountChange(fromToken.balance.toString())}
-                className="text-[#4A90E2] hover:text-[#357ABD] text-xs font-medium transition-colors"
+                onClick={() => setFromAmount(Math.max(0, maxSpendable).toString())}
+                className="text-xs text-sky-300 hover:text-sky-200"
               >
                 Max
               </button>
+              {exceedsBalance && (
+                <span className="text-xs text-rose-300">Insufficient balance (kept {reserveForGas} ETH for gas)</span>
+              )}
             </div>
           </div>
+
+          {/* from list */}
+          {openFromList && (
+            <div className="rounded-xl ring-1 ring-white/10 bg-black/70 backdrop-blur p-2 max-h-64 overflow-auto">
+              {TOKENS.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => selectToken("from", t)}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5"
+                >
+                  <div className="flex items-center gap-2">
+                    <Image src={t.logo} alt={t.symbol} width={20} height={20} className="rounded-full" />
+                    <span className="text-sm">{t.symbol}</span>
+                    <span className="text-xs text-white/40">{t.name}</span>
+                  </div>
+                  <span className="text-xs text-white/50 tabular-nums">{t.balance}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Swap Button */}
-        <div className="flex justify-center -my-2">
+        {/* Switch */}
+        <div className="flex items-center justify-center">
           <button
-            onClick={handleSwapTokens}
-            className="bg-black/60 hover:bg-black/80 border border-white/20 rounded-full p-3 transition-all duration-300 hover:scale-110"
+            onClick={() => {
+              const a = fromToken;
+              setFromToken(toToken);
+              setToToken(a);
+              // amounts recalculated by effect
+            }}
+            className="rounded-full p-2.5 ring-1 ring-white/10 bg-white/5 hover:bg-white/10 transition-transform active:scale-95"
+            aria-label="Swap tokens"
           >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
             </svg>
           </button>
         </div>
 
-        {/* To Token */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <label className="text-sm font-medium text-gray-300">To</label>
-            <span className="text-xs text-gray-400">
-              Balance: {toToken.balance} {toToken.symbol}
+        {/* TO */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-white/70">To</span>
+            <span className="text-white/50">
+              Balance: <span className="tabular-nums">{toToken.balance}</span> {toToken.symbol}
             </span>
           </div>
-          
-          <div className="bg-black/30 border border-white/20 rounded-xl p-4">
-            <div className="flex items-center justify-between">
+
+          <div className="rounded-xl ring-1 ring-white/10 bg-white/[0.03] p-4">
+            <div className="flex items-center gap-3">
+              {/* Amount */}
               <div className="flex-1">
                 <input
                   type="number"
+                  inputMode="decimal"
                   value={toAmount}
-                  onChange={(e) => handleToAmountChange(e.target.value)}
+                  onChange={(e) => {
+                    const clean = clampToDecimals(e.target.value, toToken.decimals);
+                    setToAmount(clean);
+                    const val = parseFloat(clean) || 0;
+                    const back = val * (toToken.price / fromToken.price);
+                    setFromAmount(back ? back.toFixed(6) : "");
+                  }}
                   placeholder="0.0"
-                  className="w-full bg-transparent text-white text-2xl font-semibold placeholder-gray-400 focus:outline-none"
+                  className="w-full bg-transparent text-white text-2xl font-semibold placeholder:text-white/30 focus:outline-none"
                 />
-                <div className="text-sm text-gray-400 mt-1">
-                  ${(parseFloat(toAmount) * toToken.price || 0).toLocaleString()}
+                <div className="text-xs text-white/40 mt-1">
+                  {fmtUSD((parseFloat(toAmount) || 0) * toToken.price)}
                 </div>
               </div>
-              
-              <div className="flex items-center gap-3 bg-black/40 rounded-xl px-3 py-2 border border-white/10">
-                <Image
-                  src={toToken.logo}
-                  alt={toToken.symbol}
-                  width={24}
-                  height={24}
-                  className="rounded-full"
-                />
-                <div className="text-right">
-                  <div className="text-white font-medium text-sm">{toToken.symbol}</div>
-                  <div className="text-gray-400 text-xs">{toToken.name}</div>
+
+              {/* Token selector */}
+              <button
+                onClick={() => setOpenToList((s) => !s)}
+                className="flex items-center gap-2 rounded-lg bg-white/5 ring-1 ring-white/10 px-3 py-2 hover:bg-white/10"
+              >
+                <Image src={toToken.logo} alt={toToken.symbol} width={22} height={22} className="rounded-full" />
+                <div className="text-left">
+                  <div className="text-sm text-white">{toToken.symbol}</div>
+                  <div className="text-[10px] text-white/50">{toToken.name}</div>
                 </div>
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* to list */}
+          {openToList && (
+            <div className="rounded-xl ring-1 ring-white/10 bg-black/70 backdrop-blur p-2 max-h-64 overflow-auto">
+              {TOKENS.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => selectToken("to", t)}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5"
+                >
+                  <div className="flex items-center gap-2">
+                    <Image src={t.logo} alt={t.symbol} width={20} height={20} className="rounded-full" />
+                    <span className="text-sm">{t.symbol}</span>
+                    <span className="text-xs text-white/40">{t.name}</span>
+                  </div>
+                  <span className="text-xs text-white/50 tabular-nums">{t.balance}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Rate + Slippage */}
+        <div className="rounded-xl ring-1 ring-white/10 bg-white/[0.02] p-4 space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-white/70">Rate</span>
+            <button
+              onClick={() => setInvertRate((v) => !v)}
+              className="text-white hover:text-white/80"
+              title="Invert rate"
+            >
+              {invertRate
+                ? `1 ${toToken.symbol} = ${(toToken.price / fromToken.price).toFixed(6)} ${fromToken.symbol}`
+                : `1 ${fromToken.symbol} = ${(fromToken.price / toToken.price).toFixed(6)} ${toToken.symbol}`}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-white/70">Price Impact</span>
+            <span className={priceImpactTone}>&lt; {priceImpact}%</span>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-white/70">Slippage</span>
+            <div className="flex items-center gap-2">
+              {[0.1, 0.5, 1].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setQuickSlip(v)}
+                  className={`px-2 py-1 rounded-lg text-xs ${
+                    !customSlip && slippage === v
+                      ? "bg-sky-500/20 text-sky-200 ring-1 ring-sky-400/30"
+                      : "bg-white/5 text-white/70 ring-1 ring-white/10 hover:bg-white/10"
+                  }`}
+                >
+                  {v}%
+                </button>
+              ))}
+              <div className="relative">
+                <input
+                  value={customSlip}
+                  onChange={(e) => setCustomSlip(e.target.value)}
+                  placeholder="Custom"
+                  className="w-20 px-2 py-1 rounded-lg bg-white/5 text-xs text-white/80 ring-1 ring-white/10 placeholder:text-white/30"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/40">%</span>
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-white/70">Minimum received</span>
+            <span className="text-white">
+              {toAmount ? `${minReceived.toFixed(6)} ${toToken.symbol}` : "—"}
+            </span>
           </div>
         </div>
 
-        {/* Swap Details */}
-        {fromAmount && toAmount && (
-          <div className="bg-black/20 border border-white/10 rounded-xl p-4 space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-300">Exchange Rate</span>
-              <span className="text-white">
-                1 {fromToken.symbol} = {exchangeRate.toFixed(6)} {toToken.symbol}
-              </span>
-            </div>
-            
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-300">Price Impact</span>
-              <span className="text-green-400">&lt; {priceImpact}%</span>
-            </div>
-            
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-300">Slippage Tolerance</span>
-              <span className="text-white">{slippage}%</span>
-            </div>
-            
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-300">Minimum Received</span>
-              <span className="text-white">
-                {minimumReceived.toFixed(6)} {toToken.symbol}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Swap Button */}
+        {/* CTA */}
         <button
-          disabled={!fromAmount || !toAmount || isLoading}
-          className="w-full bg-[#4A90E2] hover:bg-[#357ABD] disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-[#4A90E2]/20"
+          onClick={handleSwapClick}
+          disabled={!canSwap}
+          className="w-full rounded-xl py-3 font-semibold text-white transition-all disabled:bg-white/20 disabled:text-white/60 disabled:cursor-not-allowed bg-[#3B82F6] hover:bg-[#2F6BD8] shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
         >
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-              Swapping...
-            </div>
-          ) : !fromAmount || !toAmount ? (
-            "Enter Amount"
-          ) : (
-            `Swap ${fromToken.symbol} for ${toToken.symbol}`
-          )}
+          {isLoading ? "Swapping…" : !fromAmount ? "Enter amount" : exceedsBalance ? "Insufficient balance" : `Swap ${fromToken.symbol} → ${toToken.symbol}`}
         </button>
+
+        {/* Footnote */}
+        <p className="text-[11px] text-white/45 text-center">
+          Quotes are simulated; slippage and impact are illustrative.
+        </p>
       </div>
     </div>
   );

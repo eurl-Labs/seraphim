@@ -16,7 +16,7 @@ interface FaucetCardProps {
 
 export default function FaucetCard({ token }: FaucetCardProps) {
   return (
-    <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all duration-300">
+    <div className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-xl p-4 hover:border-white/20 transition-all duration-300">
       {/* Token Header */}
       <div className="flex items-center gap-3 mb-3">
         <Image
@@ -49,7 +49,7 @@ export default function FaucetCard({ token }: FaucetCardProps) {
       </p>
 
       {/* Network & Claim Button */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between ">
         <span className="text-xs text-gray-400">{token.network}</span>
         <button className="bg-[#4A90E2] hover:bg-[#357ABD] px-4 py-1.5 rounded-lg text-xs transition-all duration-300">
           Claim

@@ -161,11 +161,11 @@ export default function ExplorePage() {
 
             {/* Stats Overview - Simplified to 2 key metrics */}
             <div className="grid grid-cols-2 gap-4 mb-8 max-w-lg mx-auto">
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-4 text-center">
+              <div className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-lg p-4 text-center">
                 <p className="text-xl font-bold text-white">{totalTVL}</p>
                 <p className="text-xs text-gray-400">Total Value Locked</p>
               </div>
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-4 text-center">
+              <div className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-lg p-4 text-center">
                 <p className="text-xl font-bold text-white">{protocols.length}</p>
                 <p className="text-xs text-gray-400">Active Protocols</p>
               </div>
@@ -175,7 +175,7 @@ export default function ExplorePage() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Filters Sidebar */}
               <div className="lg:col-span-1">
-                <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-4 sticky top-24">
+                <div className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-lg p-4 sticky top-24">
                   <ExploreFilters
                     onCategoryChange={handleCategoryChange}
                     onSortChange={handleSortChange}

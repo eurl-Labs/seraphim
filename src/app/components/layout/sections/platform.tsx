@@ -27,8 +27,8 @@ export default function Platform() {
   ];
 
   return (
-    <section className="relative mx-auto pb-24 sm:pb-32 bg-slate-950">
-      <h2 className="text-lg md:text-xl text-center mb-6">Built in</h2>
+    <section className="relative mx-auto pb-24 sm:pb-32 bg-slate-950 ">
+      <h2 className="text-lg md:text-xl text-center mb-6 pt-10">Powered By</h2>
 
       <div className="relative">
         <Marquee className="[--duration:20s] ">

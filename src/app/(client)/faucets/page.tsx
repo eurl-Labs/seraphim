@@ -126,7 +126,7 @@ export default function FaucetsPage() {
             </div>
 
             {/* Network Info - Simplified */}
-            <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-4 mb-8 max-w-2xl mx-auto">
+            <div className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-xl p-4 mb-8 max-w-2xl mx-auto">
               <div className="grid grid-cols-3 gap-4 text-center text-sm">
                 <div>
                   <div className="text-[#4A90E2]">Network</div>

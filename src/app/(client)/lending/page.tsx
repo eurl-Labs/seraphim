@@ -35,7 +35,7 @@ export default function LendingPage() {
             </div>
 
             {/* Earn Table */}
-            <div className="bg-black/30 backdrop-blur-md rounded-xl border border-white/10 max-w-5xl mx-auto">
+            <div className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-xl max-w-5xl mx-auto">
               <EarnTable />
             </div>
           </div>

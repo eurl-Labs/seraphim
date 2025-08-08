@@ -9,7 +9,6 @@ import {
   cbBtcLogo,
   srUSDLogo,
 } from "../../../../../public/assets/logos";
-
 interface CollateralAsset {
   id: string;
   symbol: string;
@@ -75,6 +74,15 @@ export default function BorrowPanel() {
   >([]);
   const [borrowAmount, setBorrowAmount] = useState<string>("");
 
+  // --- helpers ---
+  const fmtUSD = (v: number) =>
+    isFinite(v)
+      ? `$${v.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+      : "$0";
+  const fmtPct = (v: number) => `${(isFinite(v) ? v : 0).toFixed(2)}%`;
+  const clamp = (n: number, min: number, max: number) =>
+    Math.min(Math.max(n, min), max);
+
   // Add new collateral
   const addCollateral = () => {
     const availableAssets = collateralAssets.filter(
@@ -93,6 +101,8 @@ export default function BorrowPanel() {
   const removeCollateral = (index: number) => {
     if (selectedCollaterals.length > 1) {
       setSelectedCollaterals(selectedCollaterals.filter((_, i) => i !== index));
+    } else {
+      setSelectedCollaterals([]);
     }
   };
 
@@ -121,7 +131,7 @@ export default function BorrowPanel() {
 
   // Calculate weighted average LTV
   const weightedAverageLTV = selectedCollaterals.reduce(
-    (totalLTV, collateral, index) => {
+    (totalLTV, collateral) => {
       const amount = parseFloat(collateral.amount) || 0;
       const value = amount * collateral.asset.price;
       const weight =
@@ -149,16 +159,44 @@ export default function BorrowPanel() {
     0
   );
 
-  // Calculate liquidation price (simplified - would need more complex calculation for multiple assets)
-  const liquidationValue =
-    parseFloat(borrowAmount) / (weightedAvgLiqThreshold / 100);
-  const liquidationRatio =
-    totalCollateralValue > 0 ? liquidationValue / totalCollateralValue : 0;
+  // --- derived risk metrics ---
+  const debt = parseFloat(borrowAmount) || 0;
+  const collateralUSD = totalCollateralValue;
+  const liqCapUSD = collateralUSD * (weightedAvgLiqThreshold / 100); // allowable debt at threshold
+  const healthFactor = debt > 0 ? liqCapUSD / debt : Infinity; // Aave-style HF
+  const cRatio = debt > 0 ? (collateralUSD / debt) * 100 : 0;
+  const hfProgress = clamp((healthFactor / 2.5) * 100, 0, 100);
+  const liqBuffer = Math.max(liqCapUSD - debt, 0);
+
+  const riskLevel =
+    healthFactor <= 1
+      ? {
+          label: "Liquidation Imminent",
+          tone: "text-red-400 bg-red-400/10 border-red-400/30",
+        }
+      : healthFactor <= 1.25
+      ? { label: "High", tone: "text-red-300 bg-red-300/10 border-red-300/30" }
+      : healthFactor <= 1.8
+      ? {
+          label: "Moderate",
+          tone: "text-yellow-300 bg-yellow-300/10 border-yellow-300/30",
+        }
+      : {
+          label: "Low",
+          tone: "text-emerald-300 bg-emerald-300/10 border-emerald-300/30",
+        };
+
+  // --- interest math (example static APRs; wire these to your rates source) ---
+  const borrowAPR = 3.45;
+  const stabilityFee = 0.5;
+  const totalAPR = borrowAPR + stabilityFee;
+  const dailyCost = (debt * (totalAPR / 100)) / 365;
+  const monthlyCost = debt * (totalAPR / 100) * (30 / 365);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* Borrow Panel */}
-      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6 space-y-6">
+      <div className="bborder-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] border border-white/10 rounded-xl p-6 space-y-6 h-full flex flex-col justify-between">
         <div className="flex items-center gap-2 mb-4">
           <h2 className="text-xl font-bold text-white">Borrow srUSD</h2>
           <Image
@@ -170,14 +208,14 @@ export default function BorrowPanel() {
           />
         </div>
 
-        {/* Simplified Collateral Selection */}
+        {/* Collateral Selection */}
         <div className="space-y-4">
-          <label className="text-sm font-medium text-gray-300 ">
+          <label className="text-sm font-medium text-gray-300">
             Select Collateral Assets
           </label>
 
           {/* Quick Asset Selection Grid */}
-          <div className="grid grid-cols-2 gap-3 mt-2">
+          <div className="grid grid-cols-2 gap-3 mt-2 ">
             {collateralAssets.map((asset) => {
               const isSelected = selectedCollaterals.some(
                 (sc) => sc.asset.id === asset.id
@@ -187,12 +225,10 @@ export default function BorrowPanel() {
                   key={asset.id}
                   onClick={() => {
                     if (isSelected) {
-                      // Remove if already selected
                       setSelectedCollaterals((prev) =>
                         prev.filter((sc) => sc.asset.id !== asset.id)
                       );
                     } else {
-                      // Add new collateral
                       setSelectedCollaterals((prev) => [
                         ...prev,
                         { asset, amount: "" },
@@ -202,7 +238,7 @@ export default function BorrowPanel() {
                   className={`p-4 rounded-xl border-2 transition-all duration-300 ${
                     isSelected
                       ? "border-[#4A90E2] bg-[#4A90E2]/10 shadow-lg shadow-[#4A90E2]/20"
-                      : "border-white/10 bg-black/20 hover:border-white/30 hover:bg-black/30"
+                      : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] "
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -255,7 +291,7 @@ export default function BorrowPanel() {
               </div>
               {selectedCollaterals.map((collateral, index) => (
                 <div
-                  key={collateral.asset.id}
+                  key={`${collateral.asset.id}-${index}`}
                   className="bg-gradient-to-r from-black/30 to-black/20 backdrop-blur-sm border border-white/10 rounded-xl p-4"
                 >
                   <div className="flex items-center gap-3 mb-3">
@@ -379,7 +415,7 @@ export default function BorrowPanel() {
               value={borrowAmount}
               onChange={(e) => setBorrowAmount(e.target.value)}
               placeholder="0.0"
-              className="w-full bg-[#0A0A0A] border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:border-[#4A90E2] focus:outline-none"
+              className="w-full border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:border-[#4A90E2] focus:outline-none"
             />
             <div className="absolute right-3 top-3 flex items-center gap-2">
               <Image
@@ -414,93 +450,221 @@ export default function BorrowPanel() {
       {/* Summary Panel */}
       <div className="space-y-6">
         {/* Position Summary */}
-        <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">
-            Position Summary
-          </h3>
-          <div className="space-y-4">
-            <div className="flex justify-between">
-              <span className="text-gray-300">Total Collateral Value</span>
-              <span className="text-white font-medium">
-                ${totalCollateralValue.toLocaleString()}
-              </span>
+        <div className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">
+              Position Summary
+            </h3>
+            <span
+              className={`px-2 py-1 rounded-full text-xs border ${riskLevel.tone}`}
+              title="Risk is based on Health Factor and distance to liquidation."
+            >
+              {riskLevel.label}
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-start justify-between">
+              <div className="text-gray-300">
+                Total Collateral Value
+                <span className="block text-xs text-gray-500">
+                  Sum of selected assets
+                </span>
+              </div>
+              <div className="text-white font-medium">
+                {fmtUSD(collateralUSD)}
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-300">Borrow Amount</span>
-              <span className="text-white font-medium">
-                ${borrowAmount || "0"} srUSD
-              </span>
+
+            <div className="flex items-start justify-between">
+              <div className="text-gray-300">
+                Borrow Amount
+                <span className="block text-xs text-gray-500">
+                  Outstanding srUSD debt
+                </span>
+              </div>
+              <div className="text-white font-medium">
+                {fmtUSD(debt)} <span className="text-gray-400">srUSD</span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-300">Collateralization Ratio</span>
-              <span className="text-white font-medium">
-                {totalCollateralValue && borrowAmount
-                  ? `${(
-                      (totalCollateralValue / parseFloat(borrowAmount)) *
-                      100
-                    ).toFixed(0)}%`
-                  : "-%"}
-              </span>
+
+            <div className="flex items-start justify-between">
+              <div className="text-gray-300">
+                Collateralization Ratio
+                <span
+                  className="block text-xs text-gray-500"
+                  title="Collateral / Debt"
+                >
+                  Higher is safer
+                </span>
+              </div>
+              <div className="text-white font-medium">
+                {debt > 0 ? `${cRatio.toFixed(0)}%` : "—"}
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-300">Weighted Avg Liq. Threshold</span>
-              <span className="text-red-400 font-medium">
-                {weightedAvgLiqThreshold.toFixed(1)}%
-              </span>
+
+            <div className="flex items-start justify-between">
+              <div className="text-gray-300">
+                Weighted Avg. Liq. Threshold
+                <span className="block text-xs text-gray-500">
+                  By collateral weights
+                </span>
+              </div>
+              <div className="text-white font-medium">
+                {fmtPct(weightedAvgLiqThreshold)}
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-300">Liquidation Risk</span>
-              <span className="text-red-400 font-medium">
-                {liquidationRatio > 0.9
-                  ? "High"
-                  : liquidationRatio > 0.7
-                  ? "Medium"
-                  : "Low"}
-              </span>
+
+            <div className="flex items-start justify-between">
+              <div className="text-gray-300">
+                Liquidation Buffer
+                <span
+                  className="block text-xs text-gray-500"
+                  title="Extra borrowable before liquidation"
+                >
+                  Distance to liquidation
+                </span>
+              </div>
+              <div
+                className={`${
+                  liqBuffer <= 0 ? "text-red-400" : "text-white"
+                } font-medium`}
+              >
+                {debt === 0 ? "—" : fmtUSD(liqBuffer)}
+              </div>
             </div>
+          </div>
+
+          <div className="mt-4 text-xs text-gray-400">
+            Tip: Keeping Health Factor above{" "}
+            <span className="text-gray-200">1.8</span> is recommended in
+            volatile markets.
           </div>
         </div>
 
         {/* Health Factor */}
-        <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">
-            Health Factor
-          </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-300">Current Health</span>
-              <span className="text-[#4CAF50] font-medium text-lg">2.35</span>
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
-              <div
-                className="bg-[#4CAF50] h-2 rounded-full"
-                style={{ width: "75%" }}
-              ></div>
-            </div>
-            <div className="text-xs text-gray-400">
-              Health factor must stay above 1.0 to avoid liquidation
+        <div className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]  rounded-xl p-6">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-semibold text-white">Health Factor</h3>
+            <div
+              className="text-sm text-gray-400"
+              title="Liquidation at HF ≤ 1.0"
+            >
+              {debt > 0 ? (
+                <span className="text-white font-semibold">
+                  {healthFactor === Infinity ? "∞" : healthFactor.toFixed(2)}
+                </span>
+              ) : (
+                <span className="text-white font-semibold">—</span>
+              )}
             </div>
           </div>
+
+          <div className="w-full bg-gray-800/60 rounded-full h-2 relative overflow-hidden">
+            <div
+              className={`h-2 transition-all duration-300 ${
+                healthFactor <= 1
+                  ? "bg-red-500"
+                  : healthFactor <= 1.25
+                  ? "bg-orange-400"
+                  : healthFactor <= 1.8
+                  ? "bg-yellow-400"
+                  : "bg-emerald-500"
+              }`}
+              style={{ width: `${hfProgress}%` }}
+            />
+            {/* markers */}
+            <div className="absolute inset-0 text-[10px] text-gray-400">
+              <span className="absolute left-[0%] -top-4">1.0</span>
+              <span className="absolute left-[20%] -top-4">1.25</span>
+              <span className="absolute left-[40%] -top-4">1.8</span>
+              <span className="absolute right-0 -top-4">2.5+</span>
+            </div>
+          </div>
+
+          <div className="mt-3 text-xs text-gray-400">
+            HF = (Collateral × Liq. Threshold) / Debt. Liquidation occurs at{" "}
+            <span className="text-gray-200">HF ≤ 1.0</span>.
+          </div>
+
+          {debt > 0 && healthFactor <= 1.25 && (
+            <div className="mt-3 text-xs text-red-300">
+              Consider repaying a portion of debt or adding collateral to
+              improve safety.
+            </div>
+          )}
         </div>
 
         {/* Interest Rates */}
-        <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-6">
+        <div className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]  rounded-xl p-6">
           <h3 className="text-lg font-semibold text-white mb-4">
             Interest Rates
           </h3>
+
           <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-300">Borrow APR</span>
-              <span className="text-white font-medium">3.45%</span>
+            <div className="flex items-start justify-between">
+              <div className="text-gray-300">
+                Borrow APR
+                <span className="block text-xs text-gray-500">
+                  Variable rate
+                </span>
+              </div>
+              <div className="text-white font-medium">{fmtPct(borrowAPR)}</div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-300">Stability Fee</span>
-              <span className="text-white font-medium">0.5%</span>
+
+            <div className="flex items-start justify-between">
+              <div className="text-gray-300">
+                Stability Fee
+                <span className="block text-xs text-gray-500">
+                  Protocol fee
+                </span>
+              </div>
+              <div className="text-white font-medium">
+                {fmtPct(stabilityFee)}
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-300">Total APR</span>
-              <span className="text-[#FFC107] font-medium">3.95%</span>
+
+            <div className="flex items-start justify-between">
+              <div className="text-gray-300">
+                Total APR
+                <span className="block text-xs text-gray-500">
+                  Borrow + fee
+                </span>
+              </div>
+              <div className="text-amber-300 font-semibold">
+                {fmtPct(totalAPR)}
+              </div>
             </div>
+
+            <div className="pt-2 mt-2 border-t border-white/10">
+              <div className="flex items-start justify-between">
+                <div className="text-gray-300">
+                  Est. Interest (Daily)
+                  <span className="block text-xs text-gray-500">
+                    At your current debt
+                  </span>
+                </div>
+                <div className="text-white font-medium">
+                  {fmtUSD(isNaN(dailyCost) ? 0 : dailyCost)}
+                </div>
+              </div>
+              <div className="flex items-start justify-between mt-2">
+                <div className="text-gray-300">
+                  Est. Interest (30d)
+                  <span className="block text-xs text-gray-500">
+                    Projection, not guaranteed
+                  </span>
+                </div>
+                <div className="text-white font-medium">
+                  {fmtUSD(isNaN(monthlyCost) ? 0 : monthlyCost)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 text-xs text-gray-400">
+            Interest accrues continuously; actual costs may vary with rate
+            changes.
           </div>
         </div>
       </div>

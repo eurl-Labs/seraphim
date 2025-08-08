@@ -56,7 +56,7 @@ export default function ExploreFilters({
           placeholder="Search protocols..."
           value={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full bg-black/40 border border-white/20 rounded-xl pl-12 pr-4 py-3 text-white placeholder-gray-400 focus:border-[#4A90E2] focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/20 transition-all"
+          className="w-full border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-xl pl-12 pr-4 py-3 text-white placeholder-gray-400 focus:border-[#4A90E2] focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/20 transition-all"
         />
       </div>
 
@@ -71,7 +71,7 @@ export default function ExploreFilters({
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                 activeCategory === category
                   ? "bg-[#4A90E2] text-white shadow-lg shadow-[#4A90E2]/20"
-                  : "bg-black/40 text-gray-300 hover:bg-black/60 border border-white/10"
+                  : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] text-gray-300 hover:bg-black/60 border border-white/10"
               }`}
             >
               {category}
@@ -85,7 +85,7 @@ export default function ExploreFilters({
         <h3 className="text-sm font-medium text-gray-300 mb-3">Sort By</h3>
         <select
           onChange={(e) => onSortChange(e.target.value)}
-          className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-white focus:border-[#4A90E2] focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/20 transition-all"
+          className="w-full border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.02)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-xl px-4 py-3 text-white focus:border-[#4A90E2] focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/20 transition-all"
         >
           {sortOptions.map((option) => (
             <option key={option.value} value={option.value} className="bg-black">

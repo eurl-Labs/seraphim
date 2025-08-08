@@ -164,7 +164,7 @@ const CustomBentoCard = ({ feature }: { feature: any }) => (
   </div>
 );
 
-export function BentoDemo() {
+export function Features() {
   return (
     <section className="relative mx-auto pb-24 sm:pb-32 bg-slate-950">
       <BentoGrid className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-3 gap-4 max-w-3xl mx-auto px-4">

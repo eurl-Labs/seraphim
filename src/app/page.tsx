@@ -1,7 +1,7 @@
 import Hero from "./components/layout/sections/hero";
 import MultiCollateral from "./components/layout/sections/multiCollateral";
 import Platform from "./components/layout/sections/platform";
-import { BentoDemo } from "./components/layout/sections/features";
+import { Features } from "./components/layout/sections/features";
 import Footer from "./components/layout/sections/footer";
 import NavBarSeraphim from "./components/layout/Navbar";
 
@@ -37,7 +37,7 @@ export default function Home() {
       <Hero />
       <MultiCollateral />
       <Platform />
-      <BentoDemo/>
+      <Features/>
       <Footer/>
     </>
   );
