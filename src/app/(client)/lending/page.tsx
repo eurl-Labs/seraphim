@@ -6,7 +6,6 @@ import Navbar from "../../components/navbar";
 export default function LendingPage() {
   return (
     <>
-      <Navbar />
       <div 
         className="min-h-screen text-white relative"
         style={{
@@ -17,6 +16,7 @@ export default function LendingPage() {
           backgroundAttachment: "fixed"
         }}
       >
+        <Navbar />
         {/* Background Pattern Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]" />
